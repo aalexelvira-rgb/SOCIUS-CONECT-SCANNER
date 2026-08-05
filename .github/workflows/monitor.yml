@@ -1,0 +1,36 @@
+name: Socius room monitor
+
+on:
+  schedule:
+    # Every 5 minutes (GitHub's minimum granularity). Actual runs can lag
+    # a few minutes during busy periods on GitHub's shared runners.
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}  # lets you trigger a run manually from the Actions tab
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          SOCIUS_EMAIL: ${{ secrets.SOCIUS_EMAIL }}
+          SOCIUS_PASSWORD: ${{ secrets.SOCIUS_PASSWORD }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python monitor.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "socius-monitor-bot"
+          git config user.email "actions@github.com"
+          git add state.json
+          git diff --staged --quiet || git commit -m "Update room availability state"
+          git push
