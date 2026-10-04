@@ -7,6 +7,10 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch: {}  # lets you trigger a run manually from the Actions tab
 
+concurrency:
+  group: socius-monitor
+  cancel-in-progress: false
+
 jobs:
   check:
     runs-on: ubuntu-latest
